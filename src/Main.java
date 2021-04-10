@@ -48,9 +48,7 @@ public class Main {
             while ((line = br.readLine()) != null) {
                 if (line.equals(END_OF_LOOP_FLAG) && runNumber != maxNumOfLoops){
                     runNumber++;
-                    partLines = sortLines(partLines);
-                    partLines.add(END_OF_LOOP_FLAG);
-                    writeToFile(partLines, FILE_NAME);
+                    saveLoopLastLinesWithFlag(partLines);
                     partLines.clear();
                 }else if (line.equals(END_OF_LOOP_FLAG)) {
                     break;
@@ -72,6 +70,12 @@ public class Main {
             deleteFile(FILE_NAME);
         }
 
+    }
+
+    private static void saveLoopLastLinesWithFlag(List<String> partLines) throws IOException {
+        partLines = sortLines(partLines);
+        partLines.add(END_OF_LOOP_FLAG);
+        writeToFile(partLines, FILE_NAME);
     }
 
     public static List<String> removeSavedLines(List<String> sortedLines) {
