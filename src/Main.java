@@ -11,11 +11,13 @@ public class Main {
     private final static int RIGHT_LIMIT = 122;
     private final static int BUFFER_SIZE = 4;
     private static int numberOfLines;
+    private static int countOfSaves;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         numberOfLines = scanner.nextInt();
         int maxLineSize = scanner.nextInt();
+        countOfSaves = 2*numberOfLines/BUFFER_SIZE;
 
         prepareFile(maxLineSize);
         readFile(FILE_NAME, "run_0.txt", 0);
@@ -31,27 +33,47 @@ public class Main {
     }
 
     public static void readFile(String fileName, String newFile, int runNumber) throws IOException{
-        List<String> partLines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            List<String> partLines = new ArrayList<>();
             String line;
             while ((line = br.readLine()) != null) {
                 partLines.add(line);
                 if (partLines.size() == BUFFER_SIZE) {
-                    partLines = sortLines(partLines);
-                    writeToFile(partLines.stream().limit(BUFFER_SIZE/2).collect(Collectors.toList()), newFile);
-                    partLines = partLines.stream().skip(BUFFER_SIZE/2).collect(Collectors.toList());
+                    partLines = sortAndSaveHalfLines(partLines, newFile);
+                    partLines = removeSavedLines(partLines);
                 }
             }
-            partLines = sortLines(partLines);
-            writeToFile(partLines.stream().limit(BUFFER_SIZE/2).collect(Collectors.toList()), newFile);
+            sortAndSaveHalfLines(partLines, newFile);
         }
-        if (runNumber < 2*numberOfLines/BUFFER_SIZE){
+        if (runNumber < countOfSaves){
             deleteFile(fileName);
             runNumber++;
             File file = new File("run_" + runNumber + ".txt");
-            file.createNewFile();
+            if (!file.createNewFile()){
+                System.out.println("File creating failure");
+            }
             readFile(newFile, file.getPath(), runNumber);
+        }else {
+            deleteFile(fileName);
+            File oldNameFile = new File(newFile);
+            File newNameFile = new File(FILE_NAME);
+
+            if (oldNameFile.exists()) {
+                if (!oldNameFile.renameTo(newNameFile)) {
+                    System.out.println("Rename failure");
+                }
+            }
         }
+    }
+
+    public static List<String> removeSavedLines(List<String> sortedLines) {
+        return sortedLines.stream().skip(BUFFER_SIZE/2).collect(Collectors.toList());
+    }
+
+    public static List<String> sortAndSaveHalfLines(List<String> lines, String file) throws IOException {
+        lines = sortLines(lines);
+        writeToFile(lines.stream().limit(BUFFER_SIZE/2).collect(Collectors.toList()), file);
+        return lines;
     }
 
     public static List<String> sortLines(List<String> unsortedLines) {
