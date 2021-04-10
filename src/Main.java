@@ -7,63 +7,71 @@ import java.util.stream.Collectors;
 
 public class Main {
     private final static String FILE_NAME = "file.txt";
+    private final static String RESULT_FILE_NAME = "result.txt";
+    private final static String END_OF_LOOP_FLAG = "-";
     private final static int LEFT_LIMIT = 48;
     private final static int RIGHT_LIMIT = 122;
     private final static int BUFFER_SIZE = 4;
     private static int numberOfLines;
-    private static int countOfSaves;
+    private static int maxNumOfLoops;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
         numberOfLines = scanner.nextInt();
         int maxLineSize = scanner.nextInt();
-        countOfSaves = 2*numberOfLines/BUFFER_SIZE;
+        maxNumOfLoops = 2*numberOfLines/BUFFER_SIZE;
 
-        prepareFile(maxLineSize);
-        readFile(FILE_NAME, "run_0.txt", 0);
+        prepareFiles(maxLineSize);
+        readFile();
     }
 
-    private static void prepareFile(int maxLineSize) throws IOException {
+    private static void prepareFiles(int maxLineSize) throws IOException {
         File file = new File(FILE_NAME);
+        File resultFile = new File(RESULT_FILE_NAME);
         if (file.exists()) {
             deleteFile(FILE_NAME);
+        }
+        if (resultFile.exists()) {
+            deleteFile(RESULT_FILE_NAME);
         }
         List<String> randomLines = generateLines(maxLineSize);
         writeToFile(randomLines, FILE_NAME);
     }
 
-    public static void readFile(String fileName, String newFile, int runNumber) throws IOException{
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+    public static void readFile() throws IOException{
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
+            File newFile = new File(RESULT_FILE_NAME);
             List<String> partLines = new ArrayList<>();
             String line;
+            int runNumber = 0;
+            writeToFile(END_OF_LOOP_FLAG, FILE_NAME);
             while ((line = br.readLine()) != null) {
-                partLines.add(line);
-                if (partLines.size() == BUFFER_SIZE) {
-                    partLines = sortAndSaveHalfLines(partLines, newFile);
-                    partLines = removeSavedLines(partLines);
+                if (line.equals(END_OF_LOOP_FLAG) && runNumber != maxNumOfLoops){
+                    runNumber++;
+                    partLines = sortLines(partLines);
+                    partLines.add(END_OF_LOOP_FLAG);
+                    writeToFile(partLines, FILE_NAME);
+                    partLines.clear();
+                }else if (line.equals(END_OF_LOOP_FLAG)) {
+                    break;
+                }else if(runNumber == maxNumOfLoops){
+                    if (!newFile.exists()) {
+                        if (!newFile.createNewFile()) {
+                            System.out.println("File creating failure " + newFile.getPath());
+                        }
+                    }
+                    writeToFile(line, RESULT_FILE_NAME);
+                }else {
+                    partLines.add(line);
+                    if (partLines.size() == BUFFER_SIZE) {
+                        partLines = sortAndSaveHalfLines(partLines, FILE_NAME);
+                        partLines = removeSavedLines(partLines);
+                    }
                 }
             }
-            sortAndSaveHalfLines(partLines, newFile);
+            deleteFile(FILE_NAME);
         }
-        if (runNumber < countOfSaves){
-            deleteFile(fileName);
-            runNumber++;
-            File file = new File("run_" + runNumber + ".txt");
-            if (!file.createNewFile()){
-                System.out.println("File creating failure");
-            }
-            readFile(newFile, file.getPath(), runNumber);
-        }else {
-            deleteFile(fileName);
-            File oldNameFile = new File(newFile);
-            File newNameFile = new File(FILE_NAME);
 
-            if (oldNameFile.exists()) {
-                if (!oldNameFile.renameTo(newNameFile)) {
-                    System.out.println("Rename failure");
-                }
-            }
-        }
     }
 
     public static List<String> removeSavedLines(List<String> sortedLines) {
@@ -77,7 +85,7 @@ public class Main {
     }
 
     public static List<String> sortLines(List<String> unsortedLines) {
-        return unsortedLines.stream().sorted().collect(Collectors.toList());
+        return unsortedLines.parallelStream().sorted().collect(Collectors.toList());
     }
 
     public static void deleteFile(String fileName){
@@ -93,6 +101,13 @@ public class Main {
             for (String line : randomLines){
                 printWriter.println(line);
             }
+        }
+    }
+
+    public static void writeToFile(String line, String fileName) throws IOException {
+        try(FileWriter fileWriter = new FileWriter(fileName, true);
+            PrintWriter printWriter = new PrintWriter(fileWriter)) {
+                printWriter.println(line);
         }
     }
 
