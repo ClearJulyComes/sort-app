@@ -11,7 +11,7 @@ public class Main {
     private final static String END_OF_LOOP_FLAG = "-";
     private final static int LEFT_LIMIT = 48;
     private final static int RIGHT_LIMIT = 122;
-    private final static int BUFFER_SIZE = 4;
+    private final static int BUFFER_SIZE = 50;
     private static int numberOfLines;
     private static int maxNumOfLoops;
 
