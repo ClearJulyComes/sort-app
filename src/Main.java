@@ -15,14 +15,18 @@ public class Main {
     private static int numberOfLines;
     private static int maxNumOfLoops;
 
-    public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        numberOfLines = scanner.nextInt();
-        int maxLineSize = scanner.nextInt();
-        maxNumOfLoops = 2*numberOfLines/BUFFER_SIZE;
+    public static void main(String[] args) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            numberOfLines = scanner.nextInt();
+            int maxLineSize = scanner.nextInt();
+            maxNumOfLoops = 2 * numberOfLines / BUFFER_SIZE;
 
-        prepareFiles(maxLineSize);
-        readFile();
+            prepareFiles(maxLineSize);
+            readFile();
+        }catch (IOException e){
+            System.out.println("Sorry app is closing bc IOException");
+            System.exit(1);
+        }
     }
 
     private static void prepareFiles(int maxLineSize) throws IOException {
